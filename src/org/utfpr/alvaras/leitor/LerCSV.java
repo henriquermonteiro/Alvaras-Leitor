@@ -9,12 +9,17 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.utfpr.alvaras.control.Utils;
+import org.utfpr.alvaras.control.impl.DictionaryBuilderLink;
+import org.utfpr.alvaras.control.impl.ReplacerChainLink;
+import org.utfpr.alvaras.control.impl.ToUpperChainLink;
+import org.utfpr.alvaras.control.impl.TrimChainLink;
 import org.utfpr.alvaras.model.Alvara;
 import org.utfpr.alvaras.model.Endereco;
 
@@ -25,22 +30,41 @@ import org.utfpr.alvaras.model.Endereco;
 public class LerCSV {
     public static void main(String ... args){
         FileInputStream fis = null;
+        FileOutputStream fos = null;
         try {
             File f = new File("Alvaras-Base_de_Dados.CSV");
             fis = new FileInputStream(f);
-            BufferedReader reader = new BufferedReader(new FileReader(f));
+            BufferedReader reader = new BufferedReader(new InputStreamReader(fis, "UTF-8"));
             
             reader.readLine();
             ArrayList<Alvara> alvaras = ler(reader);
             
-            int k = 0;
+            DictionaryBuilderLink dic = new DictionaryBuilderLink();
+            TrimChainLink trimer = new TrimChainLink();
+            ReplacerChainLink replacer = new ReplacerChainLink();
+            ToUpperChainLink toUpp = new ToUpperChainLink();
+            
+            replacer.addLink(trimer);
+            replacer.addLink(dic);
+            
+            toUpp.addLink(replacer);
+            
+//            int k = 0;
             for(Alvara a : alvaras){
-                k++;
+//                k++;
+                toUpp.process(a);
                 
-                System.out.println(a);
-                
-                if(k >= 10) break;
+//                System.out.println(a);
+//                
+//                if(k >= 10) break;
             }
+            
+//            dic.printDictionary();
+            File f2 = new File("dictionary.csv");
+            fos = new FileOutputStream(f2);
+            
+            dic.saveDictionary(fos);
+            
         } catch (FileNotFoundException ex) {
             Logger.getLogger(LerCSV.class.getName()).log(Level.SEVERE, null, ex);
         } catch (IOException ex) {
@@ -48,6 +72,7 @@ public class LerCSV {
         } finally {
             try {
                 fis.close();
+                fos.close();
             } catch (IOException ex) {
                 Logger.getLogger(LerCSV.class.getName()).log(Level.SEVERE, null, ex);
             }
